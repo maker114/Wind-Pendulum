@@ -3,6 +3,7 @@
 #include "delay.h"
 #include "TIM.h"
 #include "board.h"
+#include "motor.h"
 // 此文件共配置了五个定时器：
 //  TIM1 -> PWM
 //   |- CH1-> PA8/PE9
@@ -128,146 +129,7 @@ void TIM2_IRQHandler(void)
     if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
     {
         Board_LED_Toggle(LED_1);
+        MOTOR_LoopFunction();
     }
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-}
-
-/*=============TIM4（编码器2）=============*/
-// arr：自动重装载值
-// psc：预分频系数
-// 返回值：无
-// 参考值：arr=65535（0xFFFF）psc=0
-// 读取编码器转动圈数（计数值）：TIM_GetCounter(TIMx);
-// 清除编码器转动圈数（计数值）：TIM_SetCounter(TIMx,0);
-// 引脚：PB6，PB7
-void TIM4_Init(u16 arr, u16 psc)
-{
-    // 开启时钟
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);  // 使能定时器4的时钟
-    RCC_APB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE); // 使能B端口的时钟
-
-    // 配置引脚
-    GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12 | GPIO_Pin_13;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   // 浮空
-    GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-    // 配置引脚复用
-    GPIO_PinAFConfig(GPIOD, GPIO_PinSource12, GPIO_AF_TIM4);
-    GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_TIM4);
-
-    // 配置定时器时基结构体
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-    TIM_TimeBaseInitStructure.TIM_Period = arr;
-    TIM_TimeBaseInitStructure.TIM_Prescaler = psc;
-    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
-
-    // 配置定时器输入模式(由可能存在的问题,暂时去除此段代码)
-    // TIM_ICInitTypeDef TIM_ICInitStructure;
-    // TIM_ICInitStructure.TIM_Channel = TIM_Channel_1 | TIM_Channel_2;
-    // TIM_ICInitStructure.TIM_ICFilter = 0xf;
-    // TIM_ICInit(TIM4, &TIM_ICInitStructure);
-
-    // 配置定时器4为编码器接口
-    TIM_EncoderInterfaceConfig(TIM4, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-    // 使能tim4
-    TIM_Cmd(TIM4, ENABLE);
-}
-
-/*=============TIM3（编码器1）=============*/
-// arr：自动重装载值
-// psc：预分频系数
-// 返回值：无
-// 参考值：arr=65535（0xFFFF）psc=0
-// 读取编码器转动圈数（计数值）：TIM_GetCounter(TIMx);
-// 清除编码器转动圈数（计数值）：TIM_SetCounter(TIMx,0);
-// 引脚：PB4，PB5
-void TIM3_Init(u16 arr, u16 psc)
-{
-    // 开启时钟
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);  // 使能定时器3的时钟
-    RCC_APB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE); // 使能B端口的时钟
-
-    // 配置引脚
-    GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   // 浮空
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-    // 配置引脚复用
-    GPIO_PinAFConfig(GPIOB, GPIO_PinSource4, GPIO_AF_TIM3);
-    GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_TIM3);
-
-    // 配置定时器时基结构体
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-    TIM_TimeBaseInitStructure.TIM_Period = arr;
-    TIM_TimeBaseInitStructure.TIM_Prescaler = psc;
-    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseInitStructure);
-
-    // 配置定时器输入模式(由可能存在的问题,暂时去除此段代码)
-    // TIM_ICInitTypeDef TIM_ICInitStructure;
-    // TIM_ICInitStructure.TIM_Channel = TIM_Channel_1 | TIM_Channel_2;
-    // TIM_ICInitStructure.TIM_ICFilter = 0xf;
-    // TIM_ICInit(TIM3, &TIM_ICInitStructure);
-
-    // 配置定时器3为编码器接口
-    TIM_EncoderInterfaceConfig(TIM3, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-    // 使能tim3
-    TIM_Cmd(TIM3, ENABLE);
-}
-/*=============TIM5（编码器5）（备用）=============*/
-// arr：自动重装载值
-// psc：预分频系数
-// 返回值：无
-// 参考值：arr=65535（0xFFFF）psc=0
-// 读取编码器转动圈数（计数值）：TIM_GetCounter(TIMx);
-// 清除编码器转动圈数（计数值）：TIM_SetCounter(TIMx,0);
-// 引脚：PB4，PB5
-void TIM5_Init(u16 arr, u16 psc)
-{
-    // 开启时钟
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);  // 使能定时器3的时钟
-    RCC_APB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE); // 使能B端口的时钟
-
-    // 配置引脚
-    GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   // 浮空
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    // 配置引脚复用
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource0, GPIO_AF_TIM5);
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource1, GPIO_AF_TIM5);
-
-    // 配置定时器时基结构体
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-    TIM_TimeBaseInitStructure.TIM_Period = arr;
-    TIM_TimeBaseInitStructure.TIM_Prescaler = psc;
-    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(TIM5, &TIM_TimeBaseInitStructure);
-
-    // 配置定时器输入模式(由可能存在的问题,暂时去除此段代码)
-    // TIM_ICInitTypeDef TIM_ICInitStructure;
-    // TIM_ICInitStructure.TIM_Channel = TIM_Channel_1 | TIM_Channel_2;
-    // TIM_ICInitStructure.TIM_ICFilter = 0xf;
-    // TIM_ICInit(TIM5, &TIM_ICInitStructure);
-
-    // 配置定时器5为编码器接口
-    TIM_EncoderInterfaceConfig(TIM5, TIM_EncoderMode_TI12, TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
-    // 使能tim5
-    TIM_Cmd(TIM5, ENABLE);
 }

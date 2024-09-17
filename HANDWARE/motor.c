@@ -9,9 +9,6 @@
  */
 #include "motor.h"
 
-Motor_PID_Stuct X_PID_Stuct;
-Motor_PID_Stuct Y_PID_Stuct;
-
 #define X_KP 0.1
 #define X_KI 0.1
 #define X_KD 0.1
@@ -22,6 +19,9 @@ Motor_PID_Stuct Y_PID_Stuct;
 
 #define PWM_MAX 20000
 #define PWM_MIN -20000
+
+Motor_PID_Stuct X_PID_Stuct;
+Motor_PID_Stuct Y_PID_Stuct;
 
 void MOTOR_Init(void)
 {
@@ -45,7 +45,6 @@ void MOTOR_Init(void)
  */
 void MOTOR_SetPWM(int channel)
 {
-    // TODO：在完成TIM配置后补全赋值内容（注意绝对值）
     if (channel == X_Channel)
     {
         // PID限幅
@@ -56,9 +55,13 @@ void MOTOR_SetPWM(int channel)
         // PID装载
         if (X_PID_Stuct.PWM_Value > 0)
         {
+            // x正向移动，LFT电机推动，CH3->PE13
+            TIM_SetCompare3(TIM1, X_PID_Stuct.PWM_Value);
         }
         if (X_PID_Stuct.PWM_Value <= 0)
         {
+            // x反向移动，RIG电机推动，CH2->PE11
+            TIM_SetCompare2(TIM1, -X_PID_Stuct.PWM_Value);
         }
     }
     if (channel == Y_Channel)
@@ -70,9 +73,13 @@ void MOTOR_SetPWM(int channel)
             Y_PID_Stuct.PWM_Value = PWM_MIN;
         if (Y_PID_Stuct.PWM_Value > 0)
         {
+            // y正向移动，DWN电机推动，CH4->PA11
+            TIM_SetCompare4(TIM1, Y_PID_Stuct.PWM_Value);
         }
         if (Y_PID_Stuct.PWM_Value <= 0)
         {
+            // y反向移动，UP电机推动，CH1->PA8
+            TIM_SetCompare1(TIM1, -Y_PID_Stuct.PWM_Value);
         }
     }
 }

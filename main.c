@@ -7,27 +7,19 @@
 #include "TIM.h"
 #include "key2.h"
 #include "resolving.h"
+#include "motor.h"
 
 int main(void)
 {
     delay_init(168);
+    TIM1_Init(21000 - 1, 2 - 1); // 4KHZ
     uart_init(115200);
-	TIM1_Init(20000-1,840-1);
-	
-
-    float time = 0;
-    float X_range = 0;
-    float Y_range = 0;
-		float side= 0;
-
+    MOTOR_Init();
     while (1)
     {
-        resolving_XYRange(&X_range, &Y_range, 0.50, 45);
-        float X_angle = resolving_Xangle(X_range, side, time);
-        float Y_angle = resolving_Yangle(Y_range, 0, time);
-        time += 5;
-			side+=0.001f;
-        delay_ms(5);
-        printf("%f,%f\r\n", X_angle, Y_angle );
+        X_PID_Stuct.PWM_Value = -10000;
+        Y_PID_Stuct.PWM_Value = -10000;
+        MOTOR_SetPWM(X_Channel);
+        MOTOR_SetPWM(Y_Channel);
     }
 }

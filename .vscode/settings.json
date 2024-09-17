@@ -4,6 +4,7 @@
         "key2.h": "c",
         "stm32f4xx.h": "c",
         "motor.h": "c",
-        "math.h": "c"
+        "math.h": "c",
+        "sys.h": "c"
     }
 }

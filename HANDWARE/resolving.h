@@ -1,5 +1,5 @@
-#ifndef __MOTOR_H
-#define __MOTOR_H
+#ifndef __RESOLVING_H
+#define __RESOLVING_H
 
 #include "delay.h"
 #include "usart.h"

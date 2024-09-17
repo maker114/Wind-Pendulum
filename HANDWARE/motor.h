@@ -25,6 +25,7 @@ typedef struct motor_pid
 extern Motor_PID_Stuct X_PID_Stuct;
 extern Motor_PID_Stuct Y_PID_Stuct;
 
-#endif
 void MOTOR_Init(void);
 void MOTOR_SetPWM(int channel);
+
+#endif

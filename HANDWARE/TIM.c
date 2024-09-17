@@ -18,44 +18,43 @@
 // arr：自动重装载值，定义了PWM信号的周期
 // psc：预分频系数，定义了PWM信号的频率
 // 返回值：无
-// 参考值：arr=20000-1(重装载值500) psc=84-1（分频系数8400）–>周期20ms（舵机需要）
-// 通道一A8 通道二E11 通道三E13 通道四A11
+// 通道配置：
+//  |- CH1->PA8 ->UP  ->Y+
+//  |- CH2->PE11->RIG ->X+
+//  |- CH3->PE13->LFT ->X-
+//  |- CH4->PA11->DOWN->Y-
 void TIM1_Init(uint32_t arr, uint32_t psc)
 {
     // 配置GPIOE的时钟与结构体
     GPIO_InitTypeDef GPIO_InitStructure;
+
+    // 配置GPIOE的引脚11和引脚13的参数
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
-
-    // 配置GPIOE的引脚11和引脚13的复用功能
     GPIO_PinAFConfig(GPIOE, GPIO_PinSource11, GPIO_AF_TIM1);
     GPIO_PinAFConfig(GPIOE, GPIO_PinSource13, GPIO_AF_TIM1);
-    // 配置GPIOE的引脚11和引脚13的参数
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_13;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   // 默认上拉
-    // 结构体装载，完成初始化
     GPIO_Init(GPIOE, &GPIO_InitStructure);
 
-    // 配置GPIOA的引脚11和引脚13的复用功能
+    // 配置GPIOA的引脚8和引脚11的参数
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-    GPIO_PinAFConfig(GPIOE, GPIO_PinSource11, GPIO_AF_TIM1);
-    GPIO_PinAFConfig(GPIOE, GPIO_PinSource13, GPIO_AF_TIM1);
-    // 配置GPIOE的引脚11和引脚13的参数
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_13;
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_TIM1);
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource11, GPIO_AF_TIM1);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_8;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   // 默认上拉
-    // 结构体装载，完成初始化
-    GPIO_Init(GPIOE, &GPIO_InitStructure);
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-    /*将TIM1配置为PWM输出模式，通过通道1与通道2输出两个PWM波*/
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure; // 时基结构体
     // 使能APB2时钟，并配置时钟分频因子
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+
     // 配置时基结构体
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure; // 时基结构体
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseStructure.TIM_Period = arr;
@@ -66,34 +65,33 @@ void TIM1_Init(uint32_t arr, uint32_t psc)
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;             // 选用PWM1模式
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; // 比较输出使能
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCNPolarity_Low;     // 极性为高
+    TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Reset;  // 不加上这一句CH1输出不了PWM（md找了好久）
     TIM_OCInitStructure.TIM_Pulse = 0;                            // 占空比初始值为0
 
     // 配置输出比较1结构体
     TIM_OC1Init(TIM1, &TIM_OCInitStructure);
-    // 使能输出比较1预加载寄存器（通道1）
     TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);
-
     // 配置输出比较2结构体
     TIM_OC2Init(TIM1, &TIM_OCInitStructure);
-    // 使能输出比较2预加载寄存器（通道2）
     TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);
-
     // 配置输出比较3结构体
     TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-    // 使能输出比较3预加载寄存器（通道3）（舵机PE13）
     TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);
+    // 配置输出比较4结构体
+    TIM_OC4Init(TIM1, &TIM_OCInitStructure);
+    TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Enable);
 
-    // 使能TIM1的自动重加载寄存器（ARPE使能）
-    TIM_ARRPreloadConfig(TIM1, ENABLE);
-    // 使能TIM1
-    TIM_Cmd(TIM1, ENABLE);
-    // 使能PWM输出（高级定时器特有）
-    TIM_CtrlPWMOutputs(TIM1, ENABLE);
+    TIM_ARRPreloadConfig(TIM1, ENABLE); // 使能TIM1的自动重加载寄存器（ARPE使能）
+    TIM_Cmd(TIM1, ENABLE);              // 使能TIM1
+    TIM_CtrlPWMOutputs(TIM1, ENABLE);   // 使能PWM输出（高级定时器特有）
+
     // 将比较值设为0，可以在此处设置初始值
     TIM_SetCompare1(TIM1, 0);
     TIM_SetCompare2(TIM1, 0);
-    TIM_SetCompare3(TIM1, 2500 + 800); // 在此改变舵机的初始值
+    TIM_SetCompare3(TIM1, 0);
+    TIM_SetCompare3(TIM1, 0);
 }
+
 /*=============TIM2（定时循环）=============*/
 // arr：自动重装载值
 // psc：预分频系数

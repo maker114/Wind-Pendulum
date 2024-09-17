@@ -668,6 +668,11 @@
               <FileType>1</FileType>
               <FilePath>.\HANDWARE\motor.c</FilePath>
             </File>
+            <File>
+              <FileName>resolving.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\HANDWARE\resolving.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

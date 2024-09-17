@@ -1,18 +1,53 @@
 #include "resolving.h"
 #include <math.h>
 
-#define PI 3.1415926
-#define T 1592 // 周期1592ms
-#define H 0.63 // 杆长0.63m
+float PI = 3.1415926; // 圆周率
+float H2 = 0.83;      // 从万向节到地面的高度
+float T = 1592;       // 摆动周期
+float H = 0.63;       // 摆长
 
-void resolving_XYangle(float *X_Now_Angle, float *Y_Now_Angle, float L, float Direction_Angle, float Time)
+/**
+ * @brief 将摆长分解为X轴与Y轴的分量
+ *
+ * @param X_Range X轴摆幅（m）
+ * @param Y_Range Y轴摆幅（m）
+ * @param All_Range 总摆幅（m）
+ * @param Direction_Angle 方向角（角度制）
+ */
+void resolving_XYRange(float *X_Range, float *Y_Range, float All_Range, float Direction_Angle)
 {
     // 将摆长分解为X轴与Y轴的分量
-    float L_X = L * cos(Direction_Angle);
-    float L_Y = L * sin(Direction_Angle);
-    // 求出X轴与Y轴的分摆角
-    float X_Angle = asin(L_X / H);
-    float Y_Angle = asin(L_Y / H);
+    float Angle = Direction_Angle * PI / 180.0f; // 角度值转弧度制
+    *X_Range = All_Range * cos(Angle);
+    *Y_Range = All_Range * sin(Angle);
 }
 
-// TODO：X与Y轴分别写一个函数，这样方便控制摆幅与相位差，以上函数暂时作废，或者加上设置相位差的函数 XD
+/**
+ * @brief 在X方向上的摆角
+ *
+ * @param Range 摆幅（长度，单位m）
+ * @param PhaseDifference 相位偏移（弧度制,即a*PI/b）
+ * @param Time 时间系数，单位MS
+ * @return float X轴角度值
+ */
+float resolving_Xangle(float Range, float PhaseDifference, float Time)
+{
+    float Angle_Range = (atan((Range / H2))) * 180.0f / PI;                      // 摆幅角度
+    float Now_Angle = Angle_Range * sin(2.0f * PI * Time / T + PhaseDifference); // 当前角度
+    return Now_Angle;
+}
+
+/**
+ * @brief 在Y方向上的摆角
+ *
+ * @param Range 摆幅（长度，单位cm）
+ * @param PhaseDifference 相位偏移（弧度制,即a*PI/b）
+ * @param Time 时间系数，单位MS
+ * @return float Y轴角度值
+ */
+float resolving_Yangle(float Range, float PhaseDifference, float Time)
+{
+    float Angle_Range = (atan((Range / H2))) * 180.0f / PI;                      // 摆幅角度
+    float Now_Angle = Angle_Range * sin(2.0f * PI * Time / T + PhaseDifference); // 当前角度
+    return Now_Angle;
+}

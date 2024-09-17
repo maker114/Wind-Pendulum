@@ -19,18 +19,31 @@
 // psc：预分频系数，定义了PWM信号的频率
 // 返回值：无
 // 参考值：arr=20000-1(重装载值500) psc=84-1（分频系数8400）–>周期20ms（舵机需要）
+// 通道一A8 通道二E11 通道三E13 通道四A11
 void TIM1_Init(uint32_t arr, uint32_t psc)
 {
-    /*初始化TIM1的通道1，通道2,通道3,这三个引脚 */
     // 配置GPIOE的时钟与结构体
     GPIO_InitTypeDef GPIO_InitStructure;
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
-    // 配置GPIOE的引脚9、引脚11和引脚13的复用功能
-    GPIO_PinAFConfig(GPIOE, GPIO_PinSource9, GPIO_AF_TIM1);
+
+    // 配置GPIOE的引脚11和引脚13的复用功能
     GPIO_PinAFConfig(GPIOE, GPIO_PinSource11, GPIO_AF_TIM1);
     GPIO_PinAFConfig(GPIOE, GPIO_PinSource13, GPIO_AF_TIM1);
-    // 配置GPIOE的引脚9、引脚11和引脚13的参数
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_11 | GPIO_Pin_13;
+    // 配置GPIOE的引脚11和引脚13的参数
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_13;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   // 默认上拉
+    // 结构体装载，完成初始化
+    GPIO_Init(GPIOE, &GPIO_InitStructure);
+
+    // 配置GPIOA的引脚11和引脚13的复用功能
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+    GPIO_PinAFConfig(GPIOE, GPIO_PinSource11, GPIO_AF_TIM1);
+    GPIO_PinAFConfig(GPIOE, GPIO_PinSource13, GPIO_AF_TIM1);
+    // 配置GPIOE的引脚11和引脚13的参数
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11 | GPIO_Pin_13;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF; // 复用功能
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; // 推挽输出

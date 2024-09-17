@@ -188,7 +188,6 @@ void MOTOR_LoopFunction(void)
     //  PID装载
     MOTOR_SetPWM(X_Channel);
     MOTOR_SetPWM(Y_Channel);
-    //  上位机显示
     //  更新时间
     Time += 10;
     if (Time > 1592)
